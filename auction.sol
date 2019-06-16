@@ -8,6 +8,8 @@ contract Auction{
     uint public minBid; //Puja minima
     uint public idAuction; //Id de la subasta, suponiendo que habra varias
     address public beneficiary; //Beneficiario
+    address public winner;
+    bool public auctionEnded;
     //La idea es obtener la bid mas alta del array y obtener la direccion del mapping...
     //La otra opcion es hacer una variable con puja maxima e ir modificandola o no (creo que es mas eficiente).
     //Puedes hacerlo de las dos maneras y comparar, y ponerlo en el TFM como has ido viendo el coste.
@@ -26,27 +28,43 @@ contract Auction{
     //Execution of the auction
 
     constructor(uint _auctionStartingDate, uint _auctionEndingDate, uint _minBid, uint _idAuction, address _beneficiary) public {
-        auctionStarts = _auctionStarts;
+        //Determinamos todos estos datos al crear el contrato
+        auctionStartingDate = _auctionStartingDate;
         auctionEndingDate = _auctionEndingDate;
         minBid = _minBid;
         idAuction = _idAuction;
         beneficiary = _beneficiary;
     }
 
-    function bid() public payable {
-        require(now >= auctionStarts && now <= auctionEndingDate && msg.value >= minBid);
+    function bid(uint bidAmount) public {
+        require(now >= auctionStartingDate && now <= auctionEndingDate && bidAmount >= minBid);
 
-        bidsAddresses[msg.value] = msg.sender;
-        bids.push(msg.value);
+        bidsAddresses[bidAmount] = msg.sender;
+        bids.push(bidAmount);
 
     }
 
     function auctionEnd() public {
-        require(now >= auctionEndingDate);
+        require(now >= auctionEndingDate, "The auction has not ended");
+        require(auctionEnded == false, "The auction has ended");
+        require(winner == address(0), "There is already a winner");
         //Getting the winner
-        //O h
+        //ITERAR AHORA SOBRE EL ARRAY DE BIDS Y OBTENER EL MAXIMO, Y SACAR LA ADDRESS.
+        //Hacerlo luego con la modificacion de las variables e implementar zk-snarks.
+        uint i;
+        uint largest;
+        
+        for(i = 0; i < bids.length; i++){
+            if(bids[i] > largest){
+                largest = bids[i];
+            }
+        }
+
+        winner = bidsAddresses[largest];
+        auctionEnded = true;
 
     }
 
+    
 
 }
