@@ -7,13 +7,13 @@ contract Auction{
     uint public auctionEndingDate; //Variable que indica el momento final en el que ya no se admiten pujas
     uint public minBid; //Puja minima
     uint public idAuction; //Id de la subasta, suponiendo que habra varias
-    address public beneficiary; //Beneficiario
+    address payable public beneficiary; //Beneficiario
     address public winner;
     bool public auctionEnded;
     //La idea es obtener la bid mas alta del array y obtener la direccion del mapping...
     //La otra opcion es hacer una variable con puja maxima e ir modificandola o no (creo que es mas eficiente).
     //Puedes hacerlo de las dos maneras y comparar, y ponerlo en el TFM como has ido viendo el coste.
-    mapping(uint => address) bidsAddresses;
+    mapping(uint => address payable) bidsAddresses;
     uint[] bids;
     //Se podría ahorrar haciendo dos maps, uno de address => bid y otro de address => bidTime
     /*struct bidder{
@@ -27,20 +27,22 @@ contract Auction{
     //Events of the contract
     //Execution of the auction
 
-    constructor(uint _auctionStartingDate, uint _auctionEndingDate, uint _minBid, uint _idAuction, address _beneficiary) public {
+    constructor(uint _auctionStartingDate, uint _auctionEndingDate, uint _minBid, uint _idAuction, address payable _beneficiary) public {
         //Determinamos todos estos datos al crear el contrato
         auctionStartingDate = _auctionStartingDate;
         auctionEndingDate = _auctionEndingDate;
-        minBid = _minBid;
+        minBid = _minBid * 1e18;
         idAuction = _idAuction;
         beneficiary = _beneficiary;
     }
 
-    function bid(uint bidAmount) public {
-        require(now >= auctionStartingDate && now <= auctionEndingDate && bidAmount >= minBid);
+    function bid() public payable{
+        require(now >= auctionStartingDate && now <= auctionEndingDate && msg.value >= minBid);
 
-        bidsAddresses[bidAmount] = msg.sender;
-        bids.push(bidAmount);
+        bidsAddresses[msg.value] = msg.sender;
+        bids.push(msg.value);
+
+
 
     }
 
@@ -61,6 +63,15 @@ contract Auction{
         }
 
         winner = bidsAddresses[largest];
+        for(i = 0; i < bids.length; i++){
+            if(bids[i] < largest){
+                bidsAddresses[bids[i]].transfer(bids[i]);
+                bids[i] = 0;
+            }else{
+                beneficiary.transfer(largest);
+                bids[i] = 0;
+            }
+        }
         auctionEnded = true;
 
     }
