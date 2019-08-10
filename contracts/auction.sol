@@ -56,9 +56,9 @@ contract Auction{
     //Function for bidding during the bidding period
     function bid(bytes32 hashedEncryptedBid) public payable{
         require(msg.sender != auctioneer, "Auctioneer cant bid");
-        require(now >= auctionStartingDate && now <= auctionEndingDate, "You only can bid during the bidding period");
+        //require(now >= auctionStartingDate && now <= auctionEndingDate, "You only can bid during the bidding period");
         require(msg.value==signalForBid, "You have to pay signal for bidding");
-        require(bids.length < numberOfBidders + 1, "All the possible bids has been done, no more bids can be done");
+        require(bidAmounts.length < numberOfBidders + 1, "All the possible bids has been done, no more bids can be done");
         bids.push(hashedEncryptedBid);
     }
     
@@ -70,7 +70,7 @@ contract Auction{
     //Funcion que compara el hash inicial que contiene la apuesta encriptada con la clave publica y los hashes emitidos con zokrates
     function bidProver(bytes32 bidHashedSent, string memory encryptedBid, string memory hashZokrates1, string memory hashZokrates2) public payable{
         //Tengo que meterle la restriccion del segundo periodo, despues de que no se permitan mas pujas
-        require(now >= provingBidsStartingDate && now <= provingBidsStartingDate, "You only can prove that you have bid during the proving period, after bidding period");
+        //require(now >= provingBidsStartingDate && now <= provingBidsStartingDate, "You only can prove that you have bid during the proving period, after bidding period");
         require(bidAmounts.length < numberOfBidders + 1, "All the bids have been proved");
         
         for (uint i=0; i<bids.length; i++) {
@@ -96,8 +96,8 @@ contract Auction{
             uint[2][2] memory b,
             uint[2] memory c,
             uint[14] memory input) public payable returns (uint position, uint highestBid){
-        //Poner un require de que solo entre el auctioner
-        require(now >= provingBidsEndingDate, "The auction has not ended");
+        require(msg.sender == auctioneer, "Only the Auctioneer can determine the Winner of the bid");
+        //require(now >= provingBidsEndingDate, "The auction has not ended");
         require(auctionEnded == false, "The auction has ended");
 
         //Checking if the proof sent by the auctioneer is correct or not
@@ -141,6 +141,10 @@ contract Auction{
     
     function getBiggestBid() public returns (uint winnerBid){
         return biggestBid;
+    }
+
+    function getWinner() public returns (address winner){
+        return winner;
     }
 
 }
