@@ -15,5 +15,4 @@ module.exports = function(deployer) {
   deployer.deploy(Verifier).then(function(instance){
     return deployer.deploy(Auction, auctionStartingDate, auctionEndingDate, minBid, idAuction, numberOfBidders, beneficiary, auctioneer, Verifier.address)
   });
-  //deployer.deploy(Verifier);
 };
