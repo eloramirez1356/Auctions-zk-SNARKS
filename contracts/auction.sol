@@ -24,10 +24,10 @@ contract Auction{
 
     
     //Array que contiene las apuestas + salts
-    mapping(string => address payable) bidsAddresses; //Maping used for obtaining the address from the encrypted bids
+    mapping(bytes32 => address payable) bidsAddresses; //Maping used for obtaining the address from the encrypted bids
     bytes32[] public bids; //Array which contains the three elements needed for the bid, concretely the encrypted bid with the public key and the ZoKrates Hashes
-    string[] public bidAmounts; //Clear encrypted bids, without hash
-    string[2][] public hashZokratesBids; //Clear hashed bids with ZoKrates Hash
+    bytes32[] public bidAmounts; //Clear encrypted bids, without hash
+    bytes32[2][] public hashZokratesBids; //Clear hashed bids with ZoKrates Hash
     uint public biggestBid; //Variable for storing the biggest bid
     uint public positionWinnerBid; //Variable for Storing the position of the winner in the bid array
     bool public expectedHashes;
@@ -64,12 +64,12 @@ contract Auction{
     }
     
     //Function for encrypting the values sent by bidders during the bidding period. This function is used in the bidProver function.
-    function keccak256Hash(string memory encrypted, string memory hashZokrates1, string memory hashZokrates2) public pure returns (bytes32 hashSolidity){
-        return keccak256(abi.encode(bytes(encrypted), bytes(hashZokrates1), bytes(hashZokrates2)));
+    function keccak256Hash(bytes32 encrypted, bytes32 hashZokrates1, bytes32 hashZokrates2) public pure returns (bytes32 hashSolidity){
+        return keccak256(abi.encode(encrypted, hashZokrates1, hashZokrates2));
     }
 
     //Funcion que compara el hash inicial que contiene la apuesta encriptada con la clave publica y los hashes emitidos con zokrates
-    function bidProver(bytes32 bidHashedSent, string memory encryptedBid, string memory hashZokrates1, string memory hashZokrates2) public payable{
+    function bidProver(bytes32 bidHashedSent, bytes32 encryptedBid, bytes32 hashZokrates1, bytes32 hashZokrates2) public payable{
         //Tengo que meterle la restriccion del segundo periodo, despues de que no se permitan mas pujas
         //require(now >= provingBidsStartingDate && now <= provingBidsStartingDate, "You only can prove that you have bid during the proving period, after bidding period");
         require(bidAmounts.length < numberOfBidders + 1, "All the bids have been proved");
@@ -90,11 +90,11 @@ contract Auction{
         }  
     }
     
-    function checkingAuctioneerHashesInputs(string memory hash0_0,string memory hash0_1, string memory hash1_0,string memory hash1_1, string memory hash2_0,string memory hash2_1, string memory hash3_0,string memory hash3_1) public payable returns (bool correctHashes){
-        string[8] memory hashes = [hash0_0, hash0_1, hash1_0, hash1_1, hash2_0, hash2_1, hash3_0, hash3_1];
+    function checkingAuctioneerHashesInputs(uint hash0_0, uint hash0_1, uint hash1_0, uint hash1_1, uint hash2_0, uint hash2_1, uint hash3_0, uint hash3_1) public payable returns (bool correctHashes){
+        uint[2][4] memory hashes = [[hash0_0, hash0_1], [hash1_0, hash1_1], [hash2_0, hash2_1], [hash3_0, hash3_1]];
         bool sameHashes;
         for(uint row = 0; row<hashZokratesBids.length; row++){
-            if (!(((keccak256(abi.encodePacked((bytes(hashZokratesBids[row][0]))))) == (keccak256(abi.encodePacked((bytes(hashes[row*2])))))) && ((keccak256(abi.encodePacked((bytes(hashZokratesBids[row][1]))))) == (keccak256(abi.encodePacked(bytes(hashes[row*2 + 1]))))))){
+            if (!(((keccak256(abi.encodePacked(uint(hashZokratesBids[row][0])))) == (keccak256(abi.encodePacked((uint(hashes[row][0])))))) && ((keccak256(abi.encodePacked((uint(hashZokratesBids[row][1]))))) == (keccak256(abi.encodePacked(uint(hashes[row][1]))))))){
                 return false;
             }
             if(row == 3){
@@ -116,7 +116,8 @@ contract Auction{
         //require(now >= provingBidsEndingDate, "The auction has not ended");
         require(auctionEnded == false, "The auction has ended");
         //bool expectedHashes = checkingAuctioneerHashesInputs();
-        //require(expectedHashes == true, "The inputs regarding to the ZoKrates hashes are wrong, put them correctly in order in the array");
+        bool correctHashesUsedByAuctioneer = checkingAuctioneerHashesInputs(input[0], input[1], input[2], input[3], input[4], input[5], input[6], input[7]);
+        require(correctHashesUsedByAuctioneer, "The inputs regarding to the ZoKrates hashes are wrong, put them correctly in order in the array");
         //Checking if the proof sent by the auctioneer is correct or not
         bool result = verifierContractZoKrates.verifyTx(a, b, c, input);
         require(result == true, "Incorrect proof");
@@ -148,12 +149,16 @@ contract Auction{
         return bids[i];
     }
 
-    function getBidAmounts(uint i) public returns(string memory encryptedAmount){
+    function getBidAmounts(uint i) public returns(bytes32 encryptedAmount){
         return bidAmounts[i];
     }
 
-    function getHashesZokrates(uint i) public returns(string memory hashZok1, string memory hashZok2){
+    function getHashesZokrates(uint i) public returns(bytes32 hashZok1, bytes32 hashZok2){
         return (hashZokratesBids[i][0], hashZokratesBids[i][1]);
+    }
+
+    function setHashesZokrates(bytes32 a, bytes32 b) public {
+        hashZokratesBids.push([a,b]);
     }
     
     function getBiggestBid() public returns (uint winnerBid){
@@ -166,6 +171,10 @@ contract Auction{
 
     function setExpectedHashes(bool isCorrect) public {
         expectedHashes = isCorrect;
+    }
+
+    function bytes32ToUint(bytes32 b) public pure returns (uint) {
+        return uint(b);
     }
 
 }
