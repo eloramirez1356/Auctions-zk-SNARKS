@@ -161,20 +161,16 @@ contract Auction{
         hashZokratesBids.push([a,b]);
     }
     
-    function getBiggestBid() public returns (uint winnerBid){
+    function getBiggestBid() public returns (uint){
         return biggestBid;
     }
 
-    function getWinner() public returns (address winner){
+    function getWinner() public returns (address){
         return winner;
     }
 
     function setExpectedHashes(bool isCorrect) public {
         expectedHashes = isCorrect;
-    }
-
-    function bytes32ToUint(bytes32 b) public pure returns (uint) {
-        return uint(b);
     }
 
 }
