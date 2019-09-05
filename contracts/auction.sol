@@ -24,9 +24,9 @@ contract Auction{
 
     
     //Array que contiene las apuestas + salts
-    mapping(bytes32 => address payable) bidsAddresses; //Maping used for obtaining the address from the encrypted bids
+    mapping(bytes => address payable) bidsAddresses; //Maping used for obtaining the address from the encrypted bids
     bytes32[] public bids; //Array which contains the three elements needed for the bid, concretely the encrypted bid with the public key and the ZoKrates Hashes
-    bytes32[] public bidAmounts; //Clear encrypted bids, without hash
+    bytes[] public bidAmounts; //Clear encrypted bids, without hash
     bytes32[2][] public hashZokratesBids; //Clear hashed bids with ZoKrates Hash
     uint public biggestBid; //Variable for storing the biggest bid
     uint public positionWinnerBid; //Variable for Storing the position of the winner in the bid array
@@ -64,12 +64,12 @@ contract Auction{
     }
     
     //Function for encrypting the values sent by bidders during the bidding period. This function is used in the bidProver function.
-    function keccak256Hash(bytes32 encrypted, bytes32 hashZokrates1, bytes32 hashZokrates2) public pure returns (bytes32 hashSolidity){
+    function keccak256Hash(bytes memory encrypted, bytes32 hashZokrates1, bytes32 hashZokrates2) public pure returns (bytes32 hashSolidity){
         return keccak256(abi.encode(encrypted, hashZokrates1, hashZokrates2));
     }
 
     //Funcion que compara el hash inicial que contiene la apuesta encriptada con la clave publica y los hashes emitidos con zokrates
-    function bidProver(bytes32 bidHashedSent, bytes32 encryptedBid, bytes32 hashZokrates1, bytes32 hashZokrates2) public payable{
+    function bidProver(bytes32 bidHashedSent, bytes memory encryptedBid, bytes32 hashZokrates1, bytes32 hashZokrates2) public payable{
         //Tengo que meterle la restriccion del segundo periodo, despues de que no se permitan mas pujas
         //require(now >= provingBidsStartingDate && now <= provingBidsStartingDate, "You only can prove that you have bid during the proving period, after bidding period");
         require(bidAmounts.length < numberOfBidders + 1, "All the bids have been proved");
@@ -149,7 +149,7 @@ contract Auction{
         return bids[i];
     }
 
-    function getBidAmounts(uint i) public returns(bytes32 encryptedAmount){
+    function getBidAmounts(uint i) public returns(bytes memory){
         return bidAmounts[i];
     }
 
